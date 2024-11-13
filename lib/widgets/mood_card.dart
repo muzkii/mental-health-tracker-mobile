@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:mental_health_tracker/screens/moodentry_form.dart';
-
+import 'package:mental_health_tracker/screens/list_moodentry.dart';
+import 'package:provider/provider.dart';
+import 'package:pbp_django_auth/pbp_django_auth.dart';
+import 'package:mental_health_tracker/screens/login.dart';
 
 
 class ItemHomepage {
@@ -17,12 +20,14 @@ class ItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final request = context.watch<CookieRequest>();
+
     return Material(
       color: Theme.of(context).colorScheme.secondary,
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
         // Area responsif terhadap sentuhan
-        onTap: () {
+        onTap: () async {
           // Memunculkan SnackBar ketika diklik
           ScaffoldMessenger.of(context)
             ..hideCurrentSnackBar()
@@ -31,7 +36,7 @@ class ItemCard extends StatelessWidget {
 
           // Navigate ke route yang sesuai (tergantung jenis tombol)
           if (item.name == "Add Mood") {
-            // TODO: Gunakan Navigator.push untuk melakukan navigasi ke MaterialPageRoute yang mencakup TrackerFormPage.
+            // Gunakan Navigator.push untuk melakukan navigasi ke MaterialPageRoute yang mencakup TrackerFormPage.
             Navigator.push(
               context,
               MaterialPageRoute(
@@ -39,9 +44,34 @@ class ItemCard extends StatelessWidget {
               ),
             );
           } else if (item.name == "View Mood") {
-
+            Navigator.push(context,
+              MaterialPageRoute(
+                  builder: (context) => const MoodEntryPage()
+              ),
+            );
           } else if (item.name == "Logout") {
-
+                final response = await request.logout(
+                    // Change the URL to your Django app's URL. Don't forget to add the trailing slash (/) if needed.
+                    "http://localhost:8000/auth/logout/");
+                String message = response["message"];
+                if (context.mounted) {
+                    if (response['status']) {
+                        String uname = response["username"];
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                            content: Text("$message Goodbye, $uname."),
+                        ));
+                        Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(builder: (context) => const LoginPage()),
+                        );
+                    } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                                content: Text(message),
+                            ),
+                        );
+                    }
+                }
           }
         },
         child: Container(
